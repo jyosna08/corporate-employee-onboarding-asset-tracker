@@ -1,0 +1,37 @@
+server:
+  port: ${SERVER_PORT:8080}
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: lb://AUTH-SERVICE
+          predicates: [ Path=/api/auth/** ]
+        - id: employee-service
+          uri: lb://EMPLOYEE-SERVICE
+          predicates: [ Path=/api/employees/** ]
+        - id: asset-service
+          uri: lb://ASSET-SERVICE
+          predicates: [ Path=/api/assets/** ]
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: ${CORS_ALLOWED_ORIGINS}
+            allowedMethods: [ GET, POST, PUT, PATCH, DELETE, OPTIONS ]
+            allowedHeaders: [ Authorization, Content-Type, Accept ]
+            exposedHeaders: [ Location ]
+            allowCredentials: true
+      httpclient:
+        connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:2000}
+        response-timeout: ${GATEWAY_RESPONSE_TIMEOUT:5s}
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL}
+  instance:
+    prefer-ip-address: true
+security:
+  jwt:
+    secret: ${JWT_SECRET}

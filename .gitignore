@@ -1,0 +1,8 @@
+.env
+**/target/
+frontend/node_modules/
+backend/.m2repo/
+frontend/dist/
+.idea/
+.vscode/
+*.log

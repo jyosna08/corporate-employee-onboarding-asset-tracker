@@ -1,0 +1,79 @@
+{
+  "info": {
+    "_postman_id": "4f5c56f0-7e13-4ca8-b2d4-6d35f174dfee",
+    "name": "PeopleOS Onboarding API",
+    "description": "API Gateway requests for HR login, employee creation, and employee listing. Run Login first. Create employee writes a record to PostgreSQL.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "variable": [{ "key": "apiUrl", "value": "http://localhost:8080" }],
+  "item": [
+    {
+      "name": "1. HR Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{hrEmail}}\",\n  \"password\": \"{{hrPassword}}\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": { "raw": "{{apiUrl}}/api/auth/login", "host": ["{{apiUrl}}"], "path": ["api", "auth", "login"] }
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Login succeeds', function () { pm.response.to.have.status(200); });",
+          "const data = pm.response.json();",
+          "pm.expect(data.accessToken, 'accessToken').to.be.a('string').and.not.empty;",
+          "pm.collectionVariables.set('accessToken', data.accessToken);"
+        ] }
+      }]
+    },
+    {
+      "name": "2. Create employee (writes to database)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"employeeNumber\": \"{{employeeNumber}}\",\n  \"firstName\": \"Alex\",\n  \"lastName\": \"Morgan\",\n  \"email\": \"{{employeeEmail}}\",\n  \"jobTitle\": \"Product Designer\",\n  \"department\": \"Design\",\n  \"managerName\": \"Maya Chen\",\n  \"startDate\": \"2026-11-15\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": { "raw": "{{apiUrl}}/api/employees", "host": ["{{apiUrl}}"], "path": ["api", "employees"] }
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Employee created', function () { pm.response.to.have.status(201); });",
+          "const data = pm.response.json();",
+          "pm.expect(data.id, 'employee id').to.be.a('string').and.not.empty;",
+          "pm.collectionVariables.set('employeeId', data.id);"
+        ] }
+      }]
+    },
+    {
+      "name": "3. List employees",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{apiUrl}}/api/employees", "host": ["{{apiUrl}}"], "path": ["api", "employees"] }
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Employee list loads', function () { pm.response.to.have.status(200); });",
+          "pm.expect(pm.response.json()).to.be.an('array');"
+        ] }
+      }]
+    },
+    {
+      "name": "4. Get created employee",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{apiUrl}}/api/employees/{{employeeId}}", "host": ["{{apiUrl}}"], "path": ["api", "employees", "{{employeeId}}"] }
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Created employee can be fetched', function () { pm.response.to.have.status(200); });",
+          "pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('employeeId'));"
+        ] }
+      }]
+    }
+  ]
+}
