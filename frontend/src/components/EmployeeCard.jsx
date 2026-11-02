@@ -1,5 +1,6 @@
-import { ArrowRight, MoreHorizontal } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { ONBOARDING_STATUS, SYNC_STATUS } from '../constants/statuses.js';
+import SyncStatusControl from './SyncStatusControl.jsx';
 import StatusBadge from './StatusBadge.jsx';
 
 /** Employee summary card displayed in an onboarding lane. */
@@ -19,9 +20,6 @@ export default function EmployeeCard({ employee, onAdvance, onSync, canEdit, can
           </b>
           <span className="block truncate text-[11px] text-slate-400">{employee.jobTitle}</span>
         </div>
-        <button className="rounded p-1 text-slate-400 hover:bg-slate-100" aria-label="Employee actions">
-          <MoreHorizontal size={16} />
-        </button>
       </div>
       <div className="mt-2 flex items-center justify-between">
         <StatusBadge value={employee.onboardingStatus} />
@@ -37,22 +35,13 @@ export default function EmployeeCard({ employee, onAdvance, onSync, canEdit, can
       )}
       <div className="mt-2 flex flex-wrap gap-1">
         {(employee.systemSyncs || []).map((sync) => (
-          <button
+          <SyncStatusControl
             key={sync.system}
-            disabled={!canSync}
-            onClick={() => onSync(employee, sync)}
-            title={sync.failureMessage || `${sync.system}: ${sync.status}`}
-            className="rounded-md bg-slate-50 px-1.5 py-1 text-[10px] text-slate-500 disabled:cursor-default"
-          >
-            <span className="mr-1 font-semibold">{sync.system}</span>
-            <span className={sync.status === SYNC_STATUS.failed
-              ? 'text-rose-600'
-              : sync.status === SYNC_STATUS.synced
-                ? 'text-emerald-600'
-                : 'text-amber-600'}>
-              {sync.status}
-            </span>
-          </button>
+            employee={employee}
+            sync={sync}
+            canSync={canSync}
+            onSync={onSync}
+          />
         ))}
       </div>
       {failedSync && (

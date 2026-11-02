@@ -1,5 +1,6 @@
 import { Pencil } from 'lucide-react';
 import StatusBadge from './StatusBadge.jsx';
+import SyncStatusControl from './SyncStatusControl.jsx';
 
 /** Employee profile row with its permitted onboarding and access actions. */
 export default function EmployeeRow({ employee, canEdit, canSync, onAdvance, onSync, onEmployment, onEdit }) {
@@ -32,11 +33,13 @@ export default function EmployeeRow({ employee, canEdit, canSync, onAdvance, onS
       <td className="px-4 py-3">
         <div className="flex gap-1">
           {employee.systemSyncs?.map((sync) => (
-            <button disabled={!canSync} key={sync.system}
-              title={sync.failureMessage || 'Click to update sync state'}
-              onClick={() => onSync(employee, sync)}>
-              <StatusBadge value={sync.status}>{sync.system}: {sync.status}</StatusBadge>
-            </button>
+            <SyncStatusControl
+              key={sync.system}
+              employee={employee}
+              sync={sync}
+              canSync={canSync}
+              onSync={onSync}
+            />
           ))}
         </div>
       </td>

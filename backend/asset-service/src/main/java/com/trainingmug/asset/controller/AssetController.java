@@ -95,6 +95,12 @@ public class AssetController {
         return assetService.markForMaintenance(id, request.reason());
     }
 
+    @Operation(summary = "Resolve maintenance and return an asset to available inventory")
+    @PostMapping("/{id}/maintenance/resolve")
+    public AssetResponse resolveMaintenance(@PathVariable("id") UUID id) {
+        return assetService.resolveMaintenance(id);
+    }
+
     @GetMapping("/{id}/assignments")
     public Page<AssignmentResponse> history(
             @PathVariable("id") UUID id,

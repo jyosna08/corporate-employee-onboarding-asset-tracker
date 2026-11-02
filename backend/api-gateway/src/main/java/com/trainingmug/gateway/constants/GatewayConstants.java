@@ -11,6 +11,7 @@ public final class GatewayConstants {
     public static final String EMPLOYEE_PATH_PREFIX = "/api/employees";
     public static final String EMPLOYEE_SYNC_PATH_SEGMENT = "/system-sync/";
     public static final String ASSET_PATH_PREFIX = "/api/assets";
+    public static final String ASSET_MAINTENANCE_PATH_SEGMENT = "/maintenance";
     public static final String ACTUATOR_PATH_PREFIX = "/actuator/";
     public static final String USER_ID_HEADER = "X-User-Id";
     public static final String USER_ROLE_HEADER = "X-User-Role";

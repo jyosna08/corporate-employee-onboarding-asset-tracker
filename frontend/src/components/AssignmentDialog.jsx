@@ -41,7 +41,7 @@ export default function AssignmentDialog({ asset, employees, onClose, onAssign }
             </option>
           ))}
         </select>
-        {error && <p className="mt-2 text-[14px] text-rose-600">{error}</p>}
+        {error && <p role="alert" className="mt-2 text-[14px] text-rose-600">{error}</p>}
         <div className="mt-4 flex justify-end gap-2">
           <button type="button" onClick={onClose} className="rounded-lg border px-3 py-2 text-[14px]">
             Cancel

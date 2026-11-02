@@ -24,14 +24,23 @@ spring:
             exposedHeaders: [ Location ]
             allowCredentials: true
       httpclient:
-        connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:2000}
-        response-timeout: ${GATEWAY_RESPONSE_TIMEOUT:5s}
+        connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:5000}
+        response-timeout: ${GATEWAY_RESPONSE_TIMEOUT:30s}
+    loadbalancer:
+      cache:
+        ttl: ${LOADBALANCER_CACHE_TTL:5s}
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_URL}
+    registry-fetch-interval-seconds: ${EUREKA_REGISTRY_FETCH_INTERVAL_SECONDS:5}
   instance:
     prefer-ip-address: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
 security:
   jwt:
     secret: ${JWT_SECRET}

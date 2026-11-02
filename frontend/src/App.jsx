@@ -18,20 +18,28 @@ import { useAssetActions } from './hooks/useAssetActions.js';
 import { useAuth } from './hooks/useAuth.js';
 import { useEmployeeActions } from './hooks/useEmployeeActions.js';
 import { useWorkspaceData } from './hooks/useWorkspaceData.js';
-import { canManageAssets, canManageEmployees, canManageSystemSync } from './utils/roles.js';
+import {
+  canManageAssetMaintenance,
+  canManageAssets,
+  canManageEmployees,
+  canManageSystemSync,
+} from './utils/roles.js';
 
 /** Wires pages, shared layout, and the application hooks together. */
 export default function App() {
   const [page, setPage] = useState('overview');
-  const [toast, setToast] = useState('');
+  const [toast, setToast] = useState(null);
   const [dialog, setDialog] = useState('');
   const [assetEditing, setAssetEditing] = useState(null);
   const auth = useAuth();
   const workspace = useWorkspaceData(auth.token, auth.clearSession);
 
-  const notify = useCallback((message) => {
-    setToast(message);
-    window.setTimeout(() => setToast(''), UI_TIMING.toastMilliseconds);
+  const notify = useCallback((message, tone = 'success') => {
+    setToast({ message, tone });
+    const duration = tone === 'error'
+      ? UI_TIMING.errorToastMilliseconds
+      : UI_TIMING.toastMilliseconds;
+    window.setTimeout(() => setToast(null), duration);
   }, []);
 
   const employeeActions = useEmployeeActions(
@@ -62,6 +70,7 @@ export default function App() {
 
   const canEditPeople = canManageEmployees(auth.role);
   const canEditAssets = canManageAssets(auth.role);
+  const canMaintainAssets = canManageAssetMaintenance(auth.role);
   const canEditSync = canManageSystemSync(auth.role);
   const pageTitle = PAGE_TITLES[page] || PAGE_TITLES.settings;
   const metrics = workspace.metrics || {
@@ -98,6 +107,7 @@ export default function App() {
               assetActions,
               canEditPeople,
               canEditAssets,
+              canMaintainAssets,
               canEditSync,
               role: auth.role,
               openEmployeeDialog: () => setDialog('employee'),
@@ -127,8 +137,11 @@ export default function App() {
         />
       )}
       {toast && (
-        <div className="fixed bottom-5 right-5 z-[60] rounded-xl bg-slate-900 px-4 py-3 text-[14px] text-white shadow-xl">
-          {toast}
+        <div
+          role={toast.tone === 'error' ? 'alert' : 'status'}
+          className={`fixed bottom-5 right-5 z-[60] max-w-md rounded-xl px-4 py-3 text-[14px] text-white shadow-xl ${toast.tone === 'error' ? 'bg-rose-800' : 'bg-slate-900'}`}
+        >
+          {toast.message}
         </div>
       )}
     </div>
@@ -143,6 +156,7 @@ function renderPage({
   assetActions,
   canEditPeople,
   canEditAssets,
+  canMaintainAssets,
   canEditSync,
   role,
   openEmployeeDialog,
@@ -201,11 +215,13 @@ function renderPage({
         setPage={workspace.setAssetPage}
         employees={workspace.employees}
         canEdit={canEditAssets}
+        canMaintain={canMaintainAssets}
         onAdd={() => openAssetDialog()}
         onEdit={(asset) => openAssetDialog(asset)}
         onAssign={assetActions.assignAsset}
         onReturn={assetActions.returnAsset}
         onMaintenance={assetActions.markMaintenance}
+        onResolveMaintenance={assetActions.resolveMaintenance}
         onHistory={assetActions.loadHistory}
       />
     );

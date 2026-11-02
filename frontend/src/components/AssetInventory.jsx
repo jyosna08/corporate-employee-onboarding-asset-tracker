@@ -22,25 +22,30 @@ export default function AssetInventory({
   setPage,
   employees,
   canEdit,
+  canMaintain,
   onAdd,
   onEdit,
   onAssign,
   onReturn,
   onMaintenance,
+  onResolveMaintenance,
   onHistory,
 }) {
   const [assigning, setAssigning] = useState(null);
   const [historyAsset, setHistoryAsset] = useState(null);
   const [historyRows, setHistoryRows] = useState([]);
+  const [historyError, setHistoryError] = useState('');
   const rows = pageData?.content || [];
   const totalPages = pageData?.totalPages || 0;
 
   const showHistory = async (asset) => {
     setHistoryAsset(asset);
+    setHistoryError('');
     try {
       setHistoryRows(await onHistory(asset));
-    } catch {
+    } catch (error) {
       setHistoryRows([]);
+      setHistoryError(error.message || 'Could not load assignment history.');
     }
   };
 
@@ -70,10 +75,12 @@ export default function AssetInventory({
                 asset={asset}
                 employees={employees}
                 canEdit={canEdit}
+                canMaintain={canMaintain}
                 onAssign={() => setAssigning(asset)}
                 onReturn={onReturn}
                 onEdit={onEdit}
                 onMaintenance={onMaintenance}
+                onResolveMaintenance={onResolveMaintenance}
                 onHistory={showHistory}
               />
             ))}
@@ -99,6 +106,8 @@ export default function AssetInventory({
         <AssignmentHistoryDialog
           asset={historyAsset}
           rows={historyRows}
+          employees={employees}
+          error={historyError}
           onClose={() => setHistoryAsset(null)}
         />
       )}

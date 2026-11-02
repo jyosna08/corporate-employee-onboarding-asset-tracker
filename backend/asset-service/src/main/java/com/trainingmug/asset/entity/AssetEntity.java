@@ -127,4 +127,11 @@ public class AssetEntity {
         lifecycleStatus = AssetLifecycleStatus.MAINTENANCE_ALERT;
         maintenanceReason = reason;
     }
+
+    /** Returns a repaired asset to inventory and removes its resolved maintenance note. */
+    public void resolveMaintenance() {
+        employeeId = null;
+        lifecycleStatus = AssetLifecycleStatus.AVAILABLE;
+        maintenanceReason = null;
+    }
 }

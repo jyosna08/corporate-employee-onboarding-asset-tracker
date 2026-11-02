@@ -17,14 +17,10 @@ export function useAssetActions(
   }, [token, reloadAssets, refreshAssets, notify]);
 
   const assignAsset = useCallback(async (asset, employeeId) => {
-    try {
-      await assetApi.assignAsset(token, asset.id, employeeId);
-      refreshAssets();
-      await reloadEmployees();
-      notify('Asset assigned');
-    } catch (error) {
-      notify(error.message);
-    }
+    await assetApi.assignAsset(token, asset.id, employeeId);
+    refreshAssets();
+    await reloadEmployees();
+    notify('Asset assigned');
   }, [token, reloadEmployees, refreshAssets, notify]);
 
   const returnAsset = useCallback(async (asset) => {
@@ -33,7 +29,7 @@ export function useAssetActions(
       refreshAssets();
       await reloadAssets();
     } catch (error) {
-      notify(error.message);
+      notify(error.message || 'Could not return the asset.', 'error');
     }
   }, [token, reloadAssets, refreshAssets, notify]);
 
@@ -43,7 +39,18 @@ export function useAssetActions(
       refreshAssets();
       await reloadAssets();
     } catch (error) {
-      notify(error.message);
+      notify(error.message || 'Could not update the asset maintenance state.', 'error');
+    }
+  }, [token, reloadAssets, refreshAssets, notify]);
+
+  const resolveMaintenance = useCallback(async (asset) => {
+    try {
+      await assetApi.resolveAssetMaintenance(token, asset.id);
+      refreshAssets();
+      await reloadAssets();
+      notify('Maintenance resolved');
+    } catch (error) {
+      notify(error.message || 'Could not resolve asset maintenance.', 'error');
     }
   }, [token, reloadAssets, refreshAssets, notify]);
 
@@ -52,5 +59,12 @@ export function useAssetActions(
     return result.content || [];
   }, [token]);
 
-  return { saveAsset, assignAsset, returnAsset, markMaintenance, loadHistory };
+  return {
+    saveAsset,
+    assignAsset,
+    returnAsset,
+    markMaintenance,
+    resolveMaintenance,
+    loadHistory,
+  };
 }

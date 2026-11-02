@@ -26,4 +26,5 @@ export const ASSET_SORTS = {
 
 export const UI_TIMING = {
   toastMilliseconds: 3200,
+  errorToastMilliseconds: 8000,
 };

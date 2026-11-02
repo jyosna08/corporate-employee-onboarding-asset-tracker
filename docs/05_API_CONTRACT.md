@@ -200,7 +200,7 @@ The UI groups the returned employee DTOs into the three visual lanes. Sync detai
 
 ### `POST /api/assets`
 
-- Roles: `ADMIN`, `IT`.
+- Roles: `ADMIN`, `HR`, `IT`.
 - Body: required `assetTag`, `type`, `hardwareSpecs`, `purchaseDate`; lifecycle status and employee ID are server-managed on create (`AVAILABLE`, null).
 - Validation: asset tag 1-40 chars; type 1-80; hardware specs 1-1000; purchase date cannot be in the future.
 - Success: `201 Created` asset DTO and Location header; duplicate tag: `409`; invalid input: `400`.
@@ -223,16 +223,16 @@ The UI groups the returned employee DTOs into the three visual lanes. Sync detai
 
 ### `PUT /api/assets/{assetId}`
 
-- Roles: `ADMIN`, `IT`.
+- Roles: `ADMIN`, `HR`, `IT`.
 - Body: editable `assetTag`, `type`, `hardwareSpecs`, `purchaseDate`; assignment state cannot be edited here.
 - Success: `200` asset DTO; `400`, `404`, or `409` on validation/conflict.
 
 ### `POST /api/assets/{assetId}/assignments`
 
-- Roles: `ADMIN`, `IT`.
+- Roles: `ADMIN`, `HR`, `IT`.
 - Path variable: UUID `assetId`.
 - Request body: `{ "employeeId": "9d3377d5-8a9e-45b1-a81f-215ad6224730" }`.
-- Behavior: verifies employee existence and ACTIVE status by synchronous Feign call through Eureka; in one asset-db transaction sets `employee_id`, changes lifecycle to `CHECKED_OUT`, and inserts assignment history.
+- Behavior: verifies employee existence and ACTIVE status by synchronous Feign call through Eureka before opening the asset-db transaction; the transaction sets `employee_id`, changes lifecycle to `CHECKED_OUT`, and inserts assignment history. The frontend resolves employee names from the already-loaded employee list; the asset service stores and returns only the employee UUID, with no cross-service DB access.
 - Success: `201 Created` with assignment DTO; asset not available or maintenance conflict: `409`; employee missing: `404`; terminated employee: `409`; employee-service unavailable/timeout: `503` and no write occurs; invalid ID: `400`.
 - Sample response:
 
@@ -248,7 +248,7 @@ The UI groups the returned employee DTOs into the three visual lanes. Sync detai
 
 ### `POST /api/assets/{assetId}/return`
 
-- Roles: `ADMIN`, `IT`.
+- Roles: `ADMIN`, `HR`, `IT`.
 - Body: empty.
 - Success: `200` updated asset DTO; asset is set to `AVAILABLE`, employee ID cleared, and active assignment receives `returnedAt`. If asset has no open assignment: `409`; missing asset: `404`.
 
@@ -257,6 +257,13 @@ The UI groups the returned employee DTOs into the three visual lanes. Sync detai
 - Roles: `ADMIN`, `IT`.
 - Body: `{ "reason": "Battery replacement" }`; reason required, 1-500 chars.
 - Success: `200` updated asset DTO with `MAINTENANCE_ALERT`; an asset currently checked out cannot be placed into maintenance until returned (`409`); missing asset: `404`.
+
+### `POST /api/assets/{assetId}/maintenance/resolve`
+
+- Roles: `ADMIN`, `IT` only.
+- Body: empty.
+- Behavior: changes `MAINTENANCE_ALERT` to `AVAILABLE` and clears `maintenanceReason`.
+- Success: `200` updated asset DTO; an asset not in maintenance returns `409`; missing asset: `404`.
 
 ### `GET /api/assets/{assetId}/assignments`
 

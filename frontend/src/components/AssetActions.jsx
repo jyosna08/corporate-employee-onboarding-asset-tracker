@@ -1,8 +1,25 @@
-import { History, Pencil, RotateCcw, ShieldAlert, UserRoundPlus } from 'lucide-react';
+import {
+  CheckCircle2,
+  History,
+  Pencil,
+  RotateCcw,
+  ShieldAlert,
+  UserRoundPlus,
+} from 'lucide-react';
 import { ASSET_STATUS } from '../constants/statuses.js';
 
 /** Lifecycle actions available for an inventory row. */
-export default function AssetActions({ asset, canEdit, onAssign, onReturn, onEdit, onMaintenance, onHistory }) {
+export default function AssetActions({
+  asset,
+  canEdit,
+  canMaintain,
+  onAssign,
+  onReturn,
+  onEdit,
+  onMaintenance,
+  onResolveMaintenance,
+  onHistory,
+}) {
   const isAvailable = asset.lifecycleStatus === ASSET_STATUS.available;
   const isCheckedOut = asset.lifecycleStatus === ASSET_STATUS.checkedOut;
   const isMaintenance = asset.lifecycleStatus === ASSET_STATUS.maintenance;
@@ -19,9 +36,18 @@ export default function AssetActions({ asset, canEdit, onAssign, onReturn, onEdi
           <RotateCcw size={14} />
         </button>
       )}
-      {!isCheckedOut && !isMaintenance && canEdit && (
+      {!isCheckedOut && !isMaintenance && canMaintain && (
         <button title="Mark maintenance" onClick={onMaintenance} className="rounded-md p-1.5 text-orange-600 hover:bg-orange-50">
           <ShieldAlert size={14} />
+        </button>
+      )}
+      {isMaintenance && canMaintain && (
+        <button
+          title="Resolve maintenance"
+          onClick={() => onResolveMaintenance(asset)}
+          className="rounded-md p-1.5 text-emerald-600 hover:bg-emerald-50"
+        >
+          <CheckCircle2 size={14} />
         </button>
       )}
       <button

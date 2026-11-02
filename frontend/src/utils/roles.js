@@ -3,6 +3,10 @@ export function canManageEmployees(role) {
 }
 
 export function canManageAssets(role) {
+  return role === 'ADMIN' || role === 'HR' || role === 'IT';
+}
+
+export function canManageAssetMaintenance(role) {
   return role === 'ADMIN' || role === 'IT';
 }
 

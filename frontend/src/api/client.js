@@ -29,7 +29,19 @@ export async function request(path, { token = '', method = 'GET', body, signal }
     ? null
     : await response.json().catch(() => null);
   if (!response.ok) {
-    throw new Error(payload?.message || payload?.detail || `Request failed (${response.status})`);
+    const message = payload?.message || payload?.detail
+      || `Request failed (${response.status})`;
+    const fieldDetails = Array.isArray(payload?.details)
+      ? payload.details
+        .map((detail) => (detail?.field && detail?.message
+          ? `${detail.field}: ${detail.message}`
+          : ''))
+        .filter(Boolean)
+      : [];
+    const readableMessage = fieldDetails.length
+      ? `${message} — ${fieldDetails.join('; ')}`
+      : message;
+    throw new Error(readableMessage);
   }
   return payload;
 }

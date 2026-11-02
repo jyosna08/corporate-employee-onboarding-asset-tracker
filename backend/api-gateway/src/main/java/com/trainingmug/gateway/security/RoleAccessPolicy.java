@@ -56,7 +56,7 @@ public class RoleAccessPolicy {
             return true;
         }
         return GatewayConstants.HR_ROLE.equals(role)
-                && !path.endsWith("/maintenance");
+                && !path.contains(GatewayConstants.ASSET_MAINTENANCE_PATH_SEGMENT);
     }
 
     private boolean isWriteMethod(String method) {

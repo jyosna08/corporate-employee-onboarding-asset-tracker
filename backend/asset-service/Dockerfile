@@ -9,8 +9,12 @@ COPY api-gateway/pom.xml api-gateway/pom.xml
 RUN mvn -q -DskipTests dependency:go-offline
 COPY asset-service/src asset-service/src
 RUN mvn -q -pl asset-service -am package -DskipTests
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:17-jre-alpine
+RUN apk add --no-cache curl \
+    && addgroup -S app \
+    && adduser -S -G app app
 WORKDIR /app
-COPY --from=build /workspace/asset-service/target/asset-service-1.0.0.jar app.jar
+COPY --from=build --chown=app:app /workspace/asset-service/target/asset-service-1.0.0.jar app.jar
+USER app
 EXPOSE 8083
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

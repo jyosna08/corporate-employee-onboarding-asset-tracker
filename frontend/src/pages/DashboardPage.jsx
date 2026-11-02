@@ -76,7 +76,9 @@ export default function DashboardPage({
                       </span>
                     </td>
                     <td className="px-4 py-3 text-slate-500">
-                      {employee?.firstName || (asset.employeeId ? 'Assigned' : 'Available')}
+                      {employee
+                        ? `${employee.firstName} ${employee.lastName}`
+                        : asset.employeeId ? 'Assigned' : 'Available'}
                     </td>
                     <td className="px-4 py-3 text-slate-500">{asset.purchaseDate}</td>
                     <td className="px-4 py-3">

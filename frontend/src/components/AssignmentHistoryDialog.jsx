@@ -1,7 +1,7 @@
 import { formatDate } from '../utils/formatters.js';
 
 /** Displays historical assignments for a selected asset. */
-export default function AssignmentHistoryDialog({ asset, rows, onClose }) {
+export default function AssignmentHistoryDialog({ asset, rows, employees, error, onClose }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4">
       <section className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl">
@@ -15,15 +15,24 @@ export default function AssignmentHistoryDialog({ asset, rows, onClose }) {
           </button>
         </div>
         <div className="mt-4 max-h-72 overflow-auto">
-          {rows.length
-            ? rows.map((row) => (
-              <div key={row.id} className="flex justify-between border-t py-3 text-[14px]">
-                <span className="font-medium">Employee {row.employeeId.slice(0, 8)}</span>
-                <span className="text-slate-500">
-                  {formatDate(row.assignedAt)} → {row.returnedAt ? formatDate(row.returnedAt) : 'Current'}
-                </span>
-              </div>
-            ))
+          {error
+            ? <p role="alert" className="rounded-lg bg-rose-50 p-3 text-[14px] text-rose-700">{error}</p>
+            : rows.length
+            ? rows.map((row) => {
+              const employee = employees.find((item) => item.id === row.employeeId);
+              const employeeName = employee
+                ? `${employee.firstName} ${employee.lastName}`
+                : `Employee ${row.employeeId.slice(0, 8)}`;
+
+              return (
+                <div key={row.id} className="flex justify-between border-t py-3 text-[14px]">
+                  <span className="font-medium">{employeeName}</span>
+                  <span className="text-slate-500">
+                    {formatDate(row.assignedAt)} → {row.returnedAt ? formatDate(row.returnedAt) : 'Current'}
+                  </span>
+                </div>
+              );
+            })
             : <p className="py-8 text-center text-[14px] text-slate-400">No assignment history yet.</p>}
         </div>
       </section>

@@ -9,8 +9,12 @@ COPY api-gateway/pom.xml api-gateway/pom.xml
 RUN mvn -q -DskipTests dependency:go-offline
 COPY api-gateway/src api-gateway/src
 RUN mvn -q -pl api-gateway -am package -DskipTests
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:17-jre-alpine
+RUN apk add --no-cache curl \
+    && addgroup -S app \
+    && adduser -S -G app app
 WORKDIR /app
-COPY --from=build /workspace/api-gateway/target/api-gateway-1.0.0.jar app.jar
+COPY --from=build --chown=app:app /workspace/api-gateway/target/api-gateway-1.0.0.jar app.jar
+USER app
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

@@ -39,6 +39,13 @@ export function markAssetMaintenance(token, assetId, reason) {
   });
 }
 
+export function resolveAssetMaintenance(token, assetId) {
+  return request(`/api/assets/${assetId}/maintenance/resolve`, {
+    token,
+    method: 'POST',
+  });
+}
+
 export function getAssignmentHistory(token, assetId) {
   return request(`/api/assets/${assetId}/assignments?page=0&size=50`, { token });
 }

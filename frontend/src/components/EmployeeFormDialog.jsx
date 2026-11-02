@@ -97,7 +97,7 @@ export default function EmployeeFormDialog({ onClose, onSave, initial = null }) 
             </label>
           ))}
         </div>
-        {error && <p className="mt-3 rounded-lg bg-rose-50 p-2 text-[14px] text-rose-700">{error}</p>}
+        {error && <p role="alert" className="mt-3 rounded-lg bg-rose-50 p-2 text-[14px] text-rose-700">{error}</p>}
         <div className="mt-5 flex justify-end gap-2">
           <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-[14px]">
             Cancel

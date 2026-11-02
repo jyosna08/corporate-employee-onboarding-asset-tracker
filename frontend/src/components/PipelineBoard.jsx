@@ -1,4 +1,4 @@
-import { MoreHorizontal, Plus, ShieldCheck } from 'lucide-react';
+import { Plus, ShieldCheck } from 'lucide-react';
 import { ONBOARDING_STATUS } from '../constants/statuses.js';
 import EmployeeCard from './EmployeeCard.jsx';
 
@@ -64,9 +64,6 @@ export default function PipelineBoard({
                 <span className="flex-1 text-[10px] font-bold tracking-[.12em] text-slate-500">
                   {lane.hint}
                 </span>
-                <button aria-label="Lane options" className="text-slate-400">
-                  <MoreHorizontal size={16} />
-                </button>
               </div>
               <div className="grid gap-2 p-2">
                 {laneEmployees.map((employee) => (

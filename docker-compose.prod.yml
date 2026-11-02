@@ -1,0 +1,21 @@
+# Overlay with docker-compose.yml and supply production values via shell env or --env-file.
+services:
+  discovery-server:
+    ports: !reset []
+    restart: unless-stopped
+  auth-db:
+    restart: unless-stopped
+  employee-db:
+    restart: unless-stopped
+  asset-db:
+    restart: unless-stopped
+  auth-service:
+    restart: unless-stopped
+  employee-service:
+    restart: unless-stopped
+  asset-service:
+    restart: unless-stopped
+  api-gateway:
+    restart: unless-stopped
+  frontend:
+    restart: unless-stopped

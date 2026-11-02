@@ -4,7 +4,18 @@ import AssetActions from './AssetActions.jsx';
 import StatusBadge from './StatusBadge.jsx';
 
 /** Displays one asset row and its applicable actions. */
-export default function AssetRow({ asset, employees, canEdit, onAssign, onReturn, onEdit, onMaintenance, onHistory }) {
+export default function AssetRow({
+  asset,
+  employees,
+  canEdit,
+  canMaintain,
+  onAssign,
+  onReturn,
+  onEdit,
+  onMaintenance,
+  onResolveMaintenance,
+  onHistory,
+}) {
   const employee = employees.find((item) => item.id === asset.employeeId);
   const requestMaintenance = () => {
     const reason = window.prompt('Maintenance reason');
@@ -40,10 +51,12 @@ export default function AssetRow({ asset, employees, canEdit, onAssign, onReturn
         <AssetActions
           asset={asset}
           canEdit={canEdit}
+          canMaintain={canMaintain}
           onAssign={onAssign}
           onReturn={onReturn}
           onEdit={onEdit}
           onMaintenance={requestMaintenance}
+          onResolveMaintenance={onResolveMaintenance}
           onHistory={onHistory}
         />
       </td>

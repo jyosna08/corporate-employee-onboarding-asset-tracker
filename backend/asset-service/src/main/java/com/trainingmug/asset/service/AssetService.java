@@ -207,6 +207,18 @@ public class AssetService {
         return mapper.toResponse(asset);
     }
 
+    /** Only a maintenance alert can be resolved back into available inventory. */
+    @Transactional
+    public AssetResponse resolveMaintenance(UUID id) {
+        AssetEntity asset = findAssetForUpdate(id);
+        if (asset.getLifecycleStatus() != AssetLifecycleStatus.MAINTENANCE_ALERT) {
+            throw new AssetConflictException("Only assets in maintenance can be resolved");
+        }
+        asset.resolveMaintenance();
+        LOGGER.info("Resolved maintenance for asset: {}", id);
+        return mapper.toResponse(asset);
+    }
+
     @Transactional(readOnly = true)
     public Page<AssignmentResponse> getAssignmentHistory(UUID id, int page, int size) {
         if (!assets.existsById(id)) {

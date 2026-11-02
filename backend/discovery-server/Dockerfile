@@ -9,8 +9,12 @@ COPY api-gateway/pom.xml api-gateway/pom.xml
 RUN mvn -q -DskipTests dependency:go-offline
 COPY discovery-server/src discovery-server/src
 RUN mvn -q -pl discovery-server -am package -DskipTests
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:17-jre-alpine
+RUN apk add --no-cache curl \
+    && addgroup -S app \
+    && adduser -S -G app app
 WORKDIR /app
-COPY --from=build /workspace/discovery-server/target/discovery-server-1.0.0.jar app.jar
+COPY --from=build --chown=app:app /workspace/discovery-server/target/discovery-server-1.0.0.jar app.jar
+USER app
 EXPOSE 8761
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

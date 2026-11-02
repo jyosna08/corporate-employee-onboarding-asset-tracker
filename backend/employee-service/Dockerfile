@@ -9,8 +9,12 @@ COPY api-gateway/pom.xml api-gateway/pom.xml
 RUN mvn -q -DskipTests dependency:go-offline
 COPY employee-service/src employee-service/src
 RUN mvn -q -pl employee-service -am package -DskipTests
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:17-jre-alpine
+RUN apk add --no-cache curl \
+    && addgroup -S app \
+    && adduser -S -G app app
 WORKDIR /app
-COPY --from=build /workspace/employee-service/target/employee-service-1.0.0.jar app.jar
+COPY --from=build --chown=app:app /workspace/employee-service/target/employee-service-1.0.0.jar app.jar
+USER app
 EXPOSE 8082
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

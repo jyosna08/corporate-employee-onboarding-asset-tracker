@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import * as employeeApi from '../api/employees.js';
-import { EMPLOYMENT_STATUS, SYNC_STATUS } from '../constants/statuses.js';
+import { EMPLOYMENT_STATUS } from '../constants/statuses.js';
 
 /** Provides employee actions and refreshes employee and dashboard data. */
 export function useEmployeeActions(token, reloadEmployees, notify) {
@@ -25,20 +25,15 @@ export function useEmployeeActions(token, reloadEmployees, notify) {
     }
   }, [token, reloadEmployees, notify]);
 
-  const updateSync = useCallback(async (employee, sync) => {
-    const next = sync.status === SYNC_STATUS.pending
-      ? SYNC_STATUS.synced
-      : sync.status === SYNC_STATUS.synced
-        ? SYNC_STATUS.failed
-        : SYNC_STATUS.pending;
-    const failureMessage = next === SYNC_STATUS.failed
-      ? `${sync.system} profile sync failed. Check the integration connection.`
-      : null;
+  const updateSync = useCallback(async (employee, sync, status, failureMessage) => {
     try {
-      await employeeApi.updateSystemSync(token, employee, sync, next, failureMessage);
+      await employeeApi.updateSystemSync(token, employee, sync, status, failureMessage);
       await reloadEmployees();
+      notify(`${sync.system} sync updated to ${status}`);
+      return true;
     } catch (error) {
-      notify(error.message);
+      notify(error.message || 'Could not update system sync.', 'error');
+      return false;
     }
   }, [token, reloadEmployees, notify]);
 
@@ -50,7 +45,7 @@ export function useEmployeeActions(token, reloadEmployees, notify) {
       await employeeApi.updateEmploymentStatus(token, employee.id, status);
       await reloadEmployees();
     } catch (error) {
-      notify(error.message);
+      notify(error.message || 'Could not update employment status.', 'error');
     }
   }, [token, reloadEmployees, notify]);
 
