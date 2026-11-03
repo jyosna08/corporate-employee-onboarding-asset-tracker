@@ -1,11 +1,13 @@
 package com.trainingmug.auth.service;
 
 import com.trainingmug.auth.dto.RegisterRequest;
+import com.trainingmug.auth.dto.LoginRequest;
 import com.trainingmug.auth.entity.UserEntity;
 import com.trainingmug.auth.enums.UserRole;
 import com.trainingmug.auth.repository.UserRepository;
 import com.trainingmug.auth.mapper.AuthMapper;
 import com.trainingmug.auth.exception.AccountAlreadyExistsException;
+import com.trainingmug.auth.exception.InvalidCredentialsException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,5 +54,16 @@ class AuthServiceTest {
     when(users.existsByEmailIgnoreCase("jordan@example.com")).thenReturn(true);
     assertThrows(AccountAlreadyExistsException.class, () -> service.register(new RegisterRequest("Jordan Davis", "Jordan@example.com", "strong-password-123")));
     verify(users, never()).saveAndFlush(any(UserEntity.class));
+  }
+
+  @Test void loginRejectsWrongPassword() {
+    UserEntity user = new UserEntity("Jordan Davis", "jordan@example.com",
+        new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("correct-password"),
+        UserRole.HR);
+    when(users.findByEmailIgnoreCase("jordan@example.com")).thenReturn(java.util.Optional.of(user));
+
+    assertThrows(InvalidCredentialsException.class,
+        () -> service.login(new LoginRequest("jordan@example.com", "wrong-password")));
+    verifyNoInteractions(tokens);
   }
 }
