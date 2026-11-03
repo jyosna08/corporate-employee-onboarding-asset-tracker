@@ -1,25 +1,31 @@
-# STEP 4 Test Report
+# Test Report
 
-## Scope
+Date: 2026-11-03
+Command: cd backend, then mvn -B verify
 
-Added JUnit 5 and Mockito service/policy tests only. No production source, controller tests, database, Docker, or Testcontainers changes were made.
+## Automated tests (all pass, 23 tests)
 
-## Command
+| Module           | Tests                             | Result |
+| ---------------- | --------------------------------- | ------ |
+| discovery-server | 0                                 | n/a    |
+| auth-service     | 3 (AuthServiceTest)               | Pass   |
+| employee-service | 6 (entity 2, service 4)           | Pass   |
+| asset-service    | 13 (entity 3, service 10)         | Pass   |
+| api-gateway      | 1 (role matrix for ADMIN, HR, IT) | Pass   |
 
-- `mvn -B verify` (run once from `backend/`; the sandbox initially denied launching Maven, so the same command was run with the required elevated execution permission)
+## Issues found and fixed
 
-## Results by module
+- Mockito default agent cannot attach on JDK 25, so tests use mock-maker-subclass.
+- asset-service tests: strict stubbing errors fixed with lenient strictness.
+- api-gateway: spring-boot-starter-test was missing in the pom, added.
+- api-gateway: one role test contradicted the policy (HR has no asset maintenance), corrected.
 
-| Module | Tests discovered/run | Result |
-| --- | ---: | --- |
-| discovery-server | 0 | Passed; no tests present |
-| auth-service | 3 | Passed (0 failures, 0 errors) |
-| employee-service | 6 | Failed: 2 existing entity tests passed; 4 new service tests errored before test execution because Mockito could not self-attach its inline Byte Buddy mock maker on the configured Java 25 runtime |
-| asset-service | 13 expected | Skipped because Maven stopped at employee-service |
-| api-gateway | 1 expected | Skipped because Maven stopped at employee-service |
+## Manual testing (Docker Compose and UI), all pass
 
-The reactor ended with `BUILD FAILURE` at `employee-service`. The observed cause was Mockito/Byte Buddy agent attachment (`Could not self-attach to current VM`), not an assertion failure or production-code defect. Per request, Maven verification was run once and was not rerun. Asset and gateway test counts above include the existing asset entity tests plus the newly added service/policy tests; those modules were not reached during execution.
+Login and register, employee create and advance, sync with custom failure message,
+asset create, assign, return and history, maintenance and resolve, full employee names,
+HR role-based UI, employee-service down gives a clear error and recovers after restart.
 
-## Cleanup
+## Known issue
 
-Removed generated Maven `target` directories after the verification attempt.
+The first request after a cold start can return 504. A refresh works.
