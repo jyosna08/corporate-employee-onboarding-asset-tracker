@@ -1,28 +1,44 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const RETRYABLE_GET_STATUSES = new Set([502, 503, 504]);
+const MAX_GET_RETRIES = 2;
+const RETRY_DELAY_MS = 250;
+
+function waitBeforeRetry() {
+  return new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+}
 
 /** Sends a JSON request to the API gateway and normalizes API errors. */
 export async function request(path, { token = '', method = 'GET', body, signal } = {}) {
+  const normalizedMethod = method.toUpperCase();
+  const maxRetries = normalizedMethod === 'GET' ? MAX_GET_RETRIES : 0;
   let response;
-  try {
-    response = await fetch(`${API_BASE}${path}`, {
-      method,
-      signal,
-      headers: {
-        Accept: 'application/json',
-        ...(body ? { 'Content-Type': 'application/json' } : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      ...(body ? { body: JSON.stringify(body) } : {}),
-    });
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      throw error;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+    try {
+      response = await fetch(`${API_BASE}${path}`, {
+        method: normalizedMethod,
+        signal,
+        headers: {
+          Accept: 'application/json',
+          ...(body ? { 'Content-Type': 'application/json' } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        ...(body ? { body: JSON.stringify(body) } : {}),
+      });
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        throw error;
+      }
+      throw new Error(
+        `Cannot reach the API Gateway at ${API_BASE}. Start Docker Desktop, then run `
+        + '"docker compose up --build" from the project folder. If the gateway is already '
+        + 'running, check that this frontend address is allowed in CORS.',
+      );
     }
-    throw new Error(
-      `Cannot reach the API Gateway at ${API_BASE}. Start Docker Desktop, then run `
-      + '"docker compose up --build" from the project folder. If the gateway is already '
-      + 'running, check that this frontend address is allowed in CORS.',
-    );
+
+    const hasRetriesLeft = attempt < maxRetries;
+    if (!hasRetriesLeft || !RETRYABLE_GET_STATUSES.has(response.status)) break;
+    await waitBeforeRetry();
   }
 
   const payload = response.status === 204
