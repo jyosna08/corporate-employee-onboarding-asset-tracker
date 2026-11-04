@@ -1,72 +1,127 @@
 # Corporate Employee Onboarding & Asset Tracker
 
-A React operations dashboard backed by five independently deployable Spring Boot applications: Eureka discovery, API Gateway, auth, employee, and asset services. The employee and asset services own separate PostgreSQL databases.
+[![CI](https://github.com/jyosna08/corporate-employee-onboarding-asset-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/jyosna08/corporate-employee-onboarding-asset-tracker/actions/workflows/ci.yml)
 
-## Run the full stack with Docker Compose
+A web application for HR and IT teams to manage employee onboarding, integration sync status, company assets, assignments, returns, and maintenance. The frontend is built with React and Vite. Five independent Spring Boot applications provide service discovery, authentication, employee and asset APIs, and the public API Gateway.
 
-Requirements: Docker Desktop with Compose support.
+## Architecture
 
-1. Copy `.env.example` to `.env` and replace the local placeholder passwords and JWT key. Keep `.env` private.
-2. Start all applications from the project root:
+```mermaid
+flowchart LR
+  UI[React frontend] -->|JWT / HTTP| GW[API Gateway]
+  GW --> Auth[Auth service]
+  GW --> Emp[Employee service]
+  GW --> Asset[Asset service]
+  Emp --> EmpDB[(employee PostgreSQL)]
+  Asset --> AssetDB[(asset PostgreSQL)]
+  Auth --> AuthDB[(auth PostgreSQL)]
+  Eureka[Eureka discovery] -. service lookup .-> GW
+  Eureka -. registration .-> Auth
+  Eureka -. registration .-> Emp
+  Eureka -. registration .-> Asset
+  Asset -->|employee validation| Emp
+```
+
+| Application      | Purpose                                                        | Local address            |
+| ---------------- | -------------------------------------------------------------- | ------------------------ |
+| React frontend   | Employee and asset management interface                        | `http://localhost:3000`  |
+| API Gateway      | Public API, JWT validation, role checks, dashboard aggregation | `http://localhost:8080`  |
+| discovery-server | Eureka service registry                                        | `http://localhost:8761`  |
+| auth-service     | Registration, login, and JWT issuance                          | Internal Compose network |
+| employee-service | Employee profiles, onboarding, sync state                      | Internal Compose network |
+| asset-service    | Inventory, assignment history, return, maintenance             | Internal Compose network |
+| PostgreSQL       | Separate databases for auth, employees, and assets             | Internal Compose network |
+
+Browser and Postman API calls go through the gateway. Services and database ports are not published by Compose. HR and IT accounts have scoped permissions; the bootstrap account is ADMIN. Public registration creates HR accounts only.
+
+## Run locally
+
+Requirements: Docker Desktop with Docker Compose. For local frontend development, install Node.js and npm as well.
+
+1. In the project root, create `.env` from the local template if it does not already exist, then replace its placeholder passwords and JWT secret:
 
    ```powershell
-   Copy-Item .env.example .env
+   if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+   ```
+
+2. Start the stack:
+
+   ```powershell
    docker compose --parallel 1 --env-file .env up --build
    ```
 
-3. Open the UI at [http://localhost:3000](http://localhost:3000). The API Gateway is at `http://localhost:8080`; Eureka is at `http://localhost:8761`.
-4. Connect using `AUTH_BOOTSTRAP_EMAIL` and `AUTH_BOOTSTRAP_PASSWORD` from `.env`. The auth service creates this first ADMIN account on startup when those variables are set.
+3. Open `http://localhost:3000`. Sign in with `AUTH_BOOTSTRAP_EMAIL` and `AUTH_BOOTSTRAP_PASSWORD` from `.env`; the auth service provisions that ADMIN account on startup.
 
-HR users can choose **Register as HR** from the app's first screen, create an account, then sign in. Public registration always assigns the HR role; Admin and IT accounts are provisioned separately.
+4. Stop the stack with Ctrl+C, or run `docker compose --env-file .env down`. Add `-v` only when you intend to delete the local database volumes and data.
 
-Only the frontend, API Gateway, and Eureka dashboard publish host ports. The business services and PostgreSQL instances stay on the Compose network.
-
-## Local frontend development
-
-Run the backend stack with Compose, then from `frontend/` run `npm install` and `npm run dev`. The Vite origin (`http://localhost:5173`) must be present in `CORS_ALLOWED_ORIGINS` in `.env`.
-
-## Service map
-
-| Service | Port | Database |
-| --- | ---: | --- |
-| discovery-server | 8761 | none |
-| api-gateway | 8080 | none |
-| auth-service | 8081 | `auth_db` |
-| employee-service | 8082 | `employee_db` |
-| asset-service | 8083 | `asset_db` |
-| frontend | 3000 (container) | none |
-
-Each service has its own `pom.xml`, `src/main` tree, Dockerfile, and Spring application name. The Maven parent centralizes versions and supports building the services together; it does not combine their runtime processes.
-
-## Build backend applications
-
-From `backend/`, build all independent service jars with:
+For frontend development with Vite, start the backend stack and run this from `frontend/`:
 
 ```powershell
-mvn clean package -DskipTests
+npm install
+npm run dev
 ```
 
-The root Maven module coordinates Java 17 and Spring Boot/Spring Cloud dependency versions. Each service is packaged separately.
+Open the URL printed by Vite, usually `http://localhost:5173`. Ensure that origin is included in `CORS_ALLOWED_ORIGINS` in `.env`.
 
-## Example API calls
+## Test and build
 
-PowerShell examples:
+Use Java 17 for backend verification. From `backend/`:
 
 ```powershell
-$login = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/auth/login -ContentType 'application/json' -Body '{"email":"admin@example.com","password":"replace-this-with-the-.env-password"}'
-$headers = @{ Authorization = "Bearer $($login.accessToken)" }
-Invoke-RestMethod -Method Get -Uri http://localhost:8080/api/employees -Headers $headers
-Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/employees -Headers $headers -ContentType 'application/json' -Body '{"employeeNumber":"TM-2001","firstName":"Alex","lastName":"Morgan","email":"alex.morgan@example.com","jobTitle":"Product Designer","department":"Design","startDate":"2026-11-16"}'
-Invoke-RestMethod -Method Get -Uri http://localhost:8080/api/assets?status=AVAILABLE -Headers $headers
-Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/assets -Headers $headers -ContentType 'application/json' -Body '{"assetTag":"AST-900","type":"LAPTOP","hardwareSpecs":"16 GB RAM, 512 GB SSD","purchaseDate":"2026-04-28"}'
-$employee = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/employees -Headers $headers -ContentType 'application/json' -Body '{"employeeNumber":"TM-2002","firstName":"Sam","lastName":"Lee","email":"sam.lee@example.com","jobTitle":"Engineer","department":"Engineering","startDate":"2026-11-16"}'
-Invoke-RestMethod -Method Post -Uri "http://localhost:8080/api/employees/$($employee.id)/onboarding/advance" -Headers $headers
-$asset = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/assets -Headers $headers -ContentType 'application/json' -Body '{"assetTag":"AST-901","type":"LAPTOP","hardwareSpecs":"16 GB RAM, 512 GB SSD","purchaseDate":"2026-04-28"}'
-Invoke-RestMethod -Method Post -Uri "http://localhost:8080/api/assets/$($asset.id)/assignments" -Headers $headers -ContentType 'application/json' -Body (@{ employeeId = $employee.id } | ConvertTo-Json)
+mvn -B verify
 ```
 
-See [docs/05_API_CONTRACT.md](docs/05_API_CONTRACT.md) for request/response details and [docs/04_DATABASE.md](docs/04_DATABASE.md) for schema boundaries.
+The latest recorded backend result is 23 passing tests; see [docs/TEST_REPORT.md](docs/TEST_REPORT.md). From `frontend/`, install dependencies and create a production build:
 
-## Framework and implementation notes
+```powershell
+npm install --include=optional --no-audit --no-fund
+npm run build
+```
 
-The project follows the TrainingMug ADF design-first workflow. Database/API and UI/architecture documentation lives in `docs/`. DTOs separate request/response data from persistence. Flyway migrations create each service's schema. Asset assignment calls the employee service via OpenFeign and Eureka; there is no message broker or shared database.
+The CI workflow runs the backend verification and frontend build, then builds Compose images. Manual test guidance and Postman instructions are in [docs/09_TESTING.md](docs/09_TESTING.md). The implementation and external delivery checklist is in [docs/DEFINITION_OF_DONE.md](docs/DEFINITION_OF_DONE.md).
+
+## Postman
+
+Import the collection and environment from the root [`postman/`](postman/) folder. Select **Corporate Tracker Local**, set HR and IT credentials, and use the login requests to populate their tokens. HR registration is available for a new account; run it once. IT accounts are provisioned separately.
+
+The collection covers auth, employee records and onboarding, sync updates, assets and assignment history, return, maintenance and maintenance resolution, and dashboard. Requests that create records write to the database; update the environment's employee number, email, and asset tag before repeating them. The Auth Service Health request requires a direct service URL because the health endpoint is not published through the gateway.
+
+## Screenshots
+
+### Eureka service registry
+
+![Eureka service registry](docs/screenshots/01-eureka.png)
+
+### Sign in and HR registration
+
+![Sign in](docs/screenshots/02-login.png)
+
+![HR registration](docs/screenshots/03-register.png)
+
+### Dashboard and onboarding pipeline
+
+![Dashboard and onboarding pipeline](docs/screenshots/04-overview-pipeline.png)
+
+### Asset inventory and assignment history
+
+![Asset inventory](docs/screenshots/05-assets.png)
+
+![Assignment history](docs/screenshots/06-assignment-history.png)
+
+### Sync failure details
+
+![Sync failure details](docs/screenshots/07-sync-failure.png)
+
+### Local containers and Compose health
+
+![Docker containers](docs/screenshots/08-docker-containers.png)
+
+![Compose service status](docs/screenshots/09-docker-compose-ps.png)
+
+## Project documentation
+
+- [Architecture](docs/03_ARCHITECTURE.md)
+- [API contract](docs/05_API_CONTRACT.md)
+- [Testing guide](docs/09_TESTING.md)
+- [Deployment notes](docs/10_DEPLOYMENT.md)
+- [Definition of done](docs/DEFINITION_OF_DONE.md)
