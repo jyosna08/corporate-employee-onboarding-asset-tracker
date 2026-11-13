@@ -7,13 +7,13 @@ spring:
     gateway:
       routes:
         - id: auth-service
-          uri: lb://AUTH-SERVICE
+          uri: ${AUTH_SERVICE_URL:https://hr-auth.onrender.com}
           predicates: [ Path=/api/auth/** ]
         - id: employee-service
-          uri: lb://EMPLOYEE-SERVICE
+          uri: ${EMPLOYEE_SERVICE_URL:https://hr-employee.onrender.com}
           predicates: [ Path=/api/employees/** ]
         - id: asset-service
-          uri: lb://ASSET-SERVICE
+          uri: ${ASSET_SERVICE_URL:https://hr-asset.onrender.com}
           predicates: [ Path=/api/assets/** ]
       globalcors:
         cors-configurations:
