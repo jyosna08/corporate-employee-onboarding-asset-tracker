@@ -18,10 +18,10 @@ public final class GatewayConstants {
     public static final String ADMIN_ROLE = "ADMIN";
     public static final String HR_ROLE = "HR";
     public static final String IT_ROLE = "IT";
-    public static final String EMPLOYEE_SERVICE_URL = "http://employee-service/api/employees";
+    public static final String EMPLOYEE_SERVICE_URL = "https://hr-employee.onrender.com/api/employees";
     public static final int DASHBOARD_ASSET_PAGE_SIZE = 100;
     public static final String ASSET_SERVICE_URL =
-            "http://asset-service/api/assets?size=" + DASHBOARD_ASSET_PAGE_SIZE;
+            "https://hr-asset.onrender.com/api/assets?size=" + DASHBOARD_ASSET_PAGE_SIZE;
     public static final String AUTHORIZATION_REQUIRED_MESSAGE =
             "A valid bearer token is required";
     public static final String FORBIDDEN_MESSAGE = "Your role cannot perform this action";
