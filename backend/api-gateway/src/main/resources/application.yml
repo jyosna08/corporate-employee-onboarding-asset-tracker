@@ -7,20 +7,17 @@ spring:
     gateway:
       routes:
         - id: auth-service
-          uri: ${AUTH_SERVICE_URL:https://hr-auth.onrender.com}
+          uri: lb://auth-service
           predicates: [ Path=/api/auth/** ]
-          filters:
-            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
+          
         - id: employee-service
-          uri: ${EMPLOYEE_SERVICE_URL:https://hr-employee.onrender.com}
+          uri: lb://employee-service
           predicates: [ Path=/api/employees/** ]
-          filters:
-            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
+         
         - id: asset-service
-          uri: ${ASSET_SERVICE_URL:https://hr-asset.onrender.com}
+          uri: lb://asset-service
           predicates: [ Path=/api/assets/** ]
-          filters:
-            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
+          
       globalcors:
         cors-configurations:
           '[/**]':
